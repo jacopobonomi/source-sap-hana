@@ -1,0 +1,21 @@
+# Scenarios for the Airbyte CDK standard test suite (unit_tests/test_standard_suite.py).
+# They run in-process against the SQLite-backed fake HANA from unit_tests/conftest.py,
+# so the configs below never reach a real server.
+connector_image: jacopobonomi/source-sap-hana:dev
+test_strictness_level: low
+acceptance_tests:
+  spec:
+    tests:
+      - spec_path: "src/source_sap_hana/spec.json"
+  connection:
+    tests:
+      - config_path: "integration_tests/fake_hana_config.json"
+        status: "succeed"
+      - config_path: "integration_tests/fake_hana_invalid_config.json"
+        status: "failed"
+  discovery:
+    tests:
+      - config_path: "integration_tests/fake_hana_config.json"
+  basic_read:
+    tests:
+      - config_path: "integration_tests/fake_hana_config.json"

@@ -1,0 +1,35 @@
+name: CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: ${{ matrix.python-version }}
+      - run: uv sync --frozen
+      - run: uv run ruff check .
+      - run: uv run ruff format --check .
+      - run: uv run pytest -q
+
+  docker:
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-qemu-action@v3
+      - run: docker buildx build --platform linux/arm64 -t source-sap-hana:ci-arm64 --load . && docker run --rm --platform linux/arm64 source-sap-hana:ci-arm64 spec | grep -q '"type":"SPEC"'
+      - run: docker build -t source-sap-hana:ci .
+      - run: docker run --rm source-sap-hana:ci spec | grep -q '"type":"SPEC"'
+      - name: check against an unreachable host fails cleanly
+        run: |
+          echo '{"host":"127.0.0.1","port":1,"username":"x","password":"y","schemas":["S"],"max_retries":0}' > /tmp/bad.json
+          docker run --rm -v /tmp:/cfg source-sap-hana:ci check --config /cfg/bad.json | grep -q '"status":"FAILED"'

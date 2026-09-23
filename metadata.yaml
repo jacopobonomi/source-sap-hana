@@ -1,0 +1,24 @@
+data:
+  connectorType: source
+  connectorSubtype: database
+  definitionId: 46b365dc-ad8e-4be7-b110-787433476a2a
+  dockerImageTag: 0.4.1
+  dockerRepository: jacopobonomi/source-sap-hana
+  documentationUrl: https://github.com/jacopobonomi/source-sap-hana
+  githubIssueLabel: source-sap-hana
+  name: SAP HANA (Open Source)
+  icon: icon.svg
+  license: MIT
+  releaseStage: alpha
+  supportLevel: community
+  tags:
+    - language:python
+    - cdk:python
+  connectorBuildOptions:
+    baseImage: python:3.11-slim
+  registryOverrides:
+    oss:
+      enabled: true
+    cloud:
+      enabled: false
+metadataSpecVersion: "1.0"

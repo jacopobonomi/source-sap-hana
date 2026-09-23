@@ -1,0 +1,45 @@
+[project]
+name = "source-sap-hana"
+version = "0.4.1"
+description = "Open-source Airbyte source connector for SAP HANA (hdbcli based)."
+readme = "README.md"
+license = "MIT"
+authors = [
+    { name = "Jacopo Bonomi", email = "jacopobonomi18@gmail.com" }
+]
+requires-python = ">=3.11,<3.14"
+keywords = ["airbyte", "sap", "hana", "connector", "elt"]
+dependencies = [
+    "airbyte-cdk>=7.30.0,<8",
+    "hdbcli>=2.20",
+    "paramiko>=3.4",
+]
+
+[project.scripts]
+source-sap-hana = "source_sap_hana.run:run"
+
+[build-system]
+requires = ["uv_build>=0.9.17,<0.10.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+    "pytest-mock>=3.15.1",
+    "ruff>=0.16.8",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["unit_tests"]
+addopts = "-m 'not image_tests'"
+markers = [
+    "integration: requires a reachable SAP HANA instance (secrets/config.json)",
+    "image_tests: builds and runs the Docker image (run with: pytest -m image_tests)",
+]
+
+[tool.ruff]
+line-length = 140
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]
