@@ -18,4 +18,4 @@ USER airbyte
 ENTRYPOINT ["source-sap-hana"]
 
 LABEL io.airbyte.name=source-sap-hana \
-      io.airbyte.version=0.4.1
+      io.airbyte.version=0.4.2

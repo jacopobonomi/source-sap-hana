@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.4.2 — 2026-09-23
+
+- **SSH tunnel host key verification**: new optional `tunnel_host_key_fingerprint` (SHA256, as printed by `ssh-keygen -lf`).
+  When set, any other bastion key is rejected. When empty, the key is trusted on first use and its fingerprint is logged.
+- Code-scanning cleanups: no `BaseException` handling in worker threads, and no silent `except: pass`.
+
 ## 0.4.1 — 2026-09-23
 
 - Fix: `ESTIMATE` traces now include `byte_estimate` (from `SYS.M_TABLES.TABLE_SIZE`). The Airbyte platform

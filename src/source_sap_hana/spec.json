@@ -250,6 +250,15 @@
                 "airbyte_secret": true,
                 "multiline": true,
                 "order": 4
+              },
+              "tunnel_host_key_fingerprint": {
+                "title": "Bastion Host Key Fingerprint",
+                "description": "Optional SHA256 fingerprint of the jump server's SSH host key (output of `ssh-keygen -lf`, e.g. SHA256:MOyNgc...). When set, the tunnel refuses any other key. When empty, the key is accepted and its fingerprint is logged.",
+                "type": "string",
+                "examples": [
+                  "SHA256:MOyNgcFhMwSNN5EribY31l102sXrsK0qL9l844kiUIo"
+                ],
+                "order": 5
               }
             }
           },
@@ -299,6 +308,15 @@
                 "type": "string",
                 "airbyte_secret": true,
                 "order": 4
+              },
+              "tunnel_host_key_fingerprint": {
+                "title": "Bastion Host Key Fingerprint",
+                "description": "Optional SHA256 fingerprint of the jump server's SSH host key (output of `ssh-keygen -lf`, e.g. SHA256:MOyNgc...). When set, the tunnel refuses any other key. When empty, the key is accepted and its fingerprint is logged.",
+                "type": "string",
+                "examples": [
+                  "SHA256:MOyNgcFhMwSNN5EribY31l102sXrsK0qL9l844kiUIo"
+                ],
+                "order": 5
               }
             }
           }

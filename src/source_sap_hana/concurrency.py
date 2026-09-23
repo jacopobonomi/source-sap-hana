@@ -37,7 +37,7 @@ def interleave(producers: list[Callable[[], Iterator[T]]], max_workers: int, buf
             for item in producer():
                 if not put(item):
                     return
-        except BaseException as error:  # noqa: BLE001 - re-raised in the consumer thread
+        except Exception as error:  # noqa: BLE001 - re-raised in the consumer thread
             put(_Failure(error))
         finally:
             put(_DONE)

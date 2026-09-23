@@ -20,7 +20,7 @@ User documentation in Airbyte's format: [docs/sap-hana-oss.md](docs/sap-hana-oss
 | **Resumable full refresh** | Tables with a primary key are read in pages ordered by the key, with a checkpoint after each page. An interrupted sync resumes after the last emitted row, with no duplicates. |
 | **Incremental (cursor)** | Any orderable column (integer, decimal, date, timestamp, string). A checkpoint never splits rows that share a cursor value. |
 | **Per-stream settings** | Per table, you can set a row filter in SQL (`RCLNT = '100' AND GJAHR >= '2025'`) that applies in every sync mode, a default cursor, and a primary key override for tables without a PK constraint (e.g. `ACDOCA`). |
-| **SSH tunnel** | Airbyte's standard `tunnel_method` (key or password) through a bastion host. The tunnel reconnects by itself if the bastion drops the session. |
+| **SSH tunnel** | Airbyte's standard `tunnel_method` (key or password) through a bastion host, with optional host key pinning (`tunnel_host_key_fingerprint`). The tunnel reconnects by itself if the bastion drops the session. |
 | **Resilience** | Reconnects automatically on transient HANA errors (`-10807 Connection down`, `-10709 Connection failed`, …) and resumes from the last checkpoint. The retry budget resets whenever the sync makes progress. |
 | **Fast** | Streams rows with `fetchmany`, so memory stays flat. Protocol compression is on by default: 941k `MAKT` rows over VPN took 23 s with it and 86 s without. |
 | **SAP quirks** | Quotes every identifier (`/BIC/...` namespaces), strips NUL characters (e.g. `MAKT`) that PostgreSQL rejects, reads LOBs. |
@@ -35,15 +35,15 @@ Build the image for your Airbyte host's architecture (`linux/amd64` or `linux/ar
 your Airbyte instance can pull from:
 
 ```bash
-docker build --platform linux/amd64 -t <registry>/source-sap-hana:0.4.1 .
-docker push <registry>/source-sap-hana:0.4.1
+docker build --platform linux/amd64 -t <registry>/source-sap-hana:0.4.2 .
+docker push <registry>/source-sap-hana:0.4.2
 ```
 
 Without a registry, `scripts/deploy_to_airbyte.sh root@<airbyte-host>` builds for the right architecture and loads the
 image straight into an `abctl` (kind) or docker-compose Airbyte over SSH.
 
 In Airbyte OSS: *Settings → Sources → + New connector → Add a new Docker connector*
-→ image `<registry>/source-sap-hana`, tag `0.4.1`. Then create a source of type **SAP HANA (Open Source)**.
+→ image `<registry>/source-sap-hana`, tag `0.4.2`. Then create a source of type **SAP HANA (Open Source)**.
 
 Minimal configuration:
 

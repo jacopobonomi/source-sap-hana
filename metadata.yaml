@@ -2,7 +2,7 @@ data:
   connectorType: source
   connectorSubtype: database
   definitionId: 46b365dc-ad8e-4be7-b110-787433476a2a
-  dockerImageTag: 0.4.1
+  dockerImageTag: 0.4.2
   dockerRepository: jacopobonomi/source-sap-hana
   documentationUrl: https://github.com/jacopobonomi/source-sap-hana
   githubIssueLabel: source-sap-hana

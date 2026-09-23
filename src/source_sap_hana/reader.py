@@ -12,6 +12,7 @@ Three read strategies:
 
 from __future__ import annotations
 
+import contextlib
 import logging
 import time
 from collections.abc import Callable, Iterator, Mapping, Sequence
@@ -256,10 +257,8 @@ class StreamReader:
             finally:
                 cursor.close()
         finally:
-            try:
+            with contextlib.suppress(Exception):  # the connection may already be dead after a network error
                 conn.close()
-            except Exception:  # noqa: BLE001
-                pass
 
     def _base_select(self, table: DiscoveredTable, columns: Sequence[str]) -> str:
         return f"SELECT {', '.join(quote_identifier(c) for c in columns)} FROM {qualified_name(table.schema, table.name)}"

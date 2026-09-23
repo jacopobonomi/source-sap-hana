@@ -52,7 +52,7 @@ They only show objects the user is allowed to read.
 | Incremental Sync - Append | Yes | User-defined cursor |
 | Incremental Sync - Append + Deduped | Yes | Uses the table's primary key, or the `primary_key` override |
 | Namespaces | Yes | The HANA schema is the stream namespace |
-| SSH Tunnel | Yes | Key or password authentication |
+| SSH Tunnel | Yes | Key or password authentication, optional host key pinning |
 | Column selection | Yes | Only selected columns are queried |
 
 ### Stream settings
@@ -119,6 +119,7 @@ Resumable full refresh and incremental streams continue from their last checkpoi
 
 | Version | Date       | Pull Request | Subject |
 |:--------|:-----------|:-------------|:--------|
+| 0.4.2   | 2026-09-23 | –            | Optional SSH host key pinning (`tunnel_host_key_fingerprint`) |
 | 0.4.1   | 2026-09-23 | –            | Include `byte_estimate` in estimate traces (required by the Airbyte platform) |
 | 0.4.0   | 2026-09-23 | –            | Concurrent stream reads, row estimates, check-time validation of row filters |
 | 0.3.0   | 2026-09-23 | –            | SSH tunnel, per-stream settings (filter, default cursor, primary key override) |

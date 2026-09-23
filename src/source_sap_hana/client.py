@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import logging
 import time
 from collections.abc import Callable, Iterator, Sequence
@@ -89,10 +90,8 @@ class HanaClient:
         try:
             yield conn
         finally:
-            try:
+            with contextlib.suppress(Exception):  # closing a dead connection must never mask the real error
                 conn.close()
-            except Exception:  # noqa: BLE001 - closing a dead connection must never mask the real error
-                pass
 
     def with_retries(self, fn: Callable[[], T], what: str) -> T:
         attempt = 0
