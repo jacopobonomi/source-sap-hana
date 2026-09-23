@@ -1,7 +1,6 @@
-# Scenarios for the Airbyte CDK standard test suite (unit_tests/test_standard_suite.py).
-# They run in-process against the SQLite-backed fake HANA from unit_tests/conftest.py,
-# so the configs below never reach a real server.
-connector_image: jacopobonomi/source-sap-hana:dev
+# Connector acceptance tests against a real SAP HANA (secrets/config.json, see integration_tests/sample_config.json).
+# The Airbyte CDK standard tests in unit_tests/test_standard_suite.py run against a fake HANA and do not use this file.
+connector_image: airbyte/source-sap-hana:dev
 test_strictness_level: low
 acceptance_tests:
   spec:
@@ -9,13 +8,18 @@ acceptance_tests:
       - spec_path: "src/source_sap_hana/spec.json"
   connection:
     tests:
-      - config_path: "integration_tests/fake_hana_config.json"
+      - config_path: "secrets/config.json"
         status: "succeed"
-      - config_path: "integration_tests/fake_hana_invalid_config.json"
+      - config_path: "integration_tests/invalid_config.json"
         status: "failed"
   discovery:
     tests:
-      - config_path: "integration_tests/fake_hana_config.json"
+      - config_path: "secrets/config.json"
   basic_read:
     tests:
-      - config_path: "integration_tests/fake_hana_config.json"
+      - config_path: "secrets/config.json"
+        configured_catalog_path: "integration_tests/configured_catalog.json"
+  full_refresh:
+    tests:
+      - config_path: "secrets/config.json"
+        configured_catalog_path: "integration_tests/configured_catalog.json"
