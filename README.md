@@ -31,19 +31,18 @@ User documentation in Airbyte's format: [docs/sap-hana-oss.md](docs/sap-hana-oss
 
 ## Quick start
 
-Build the image for your Airbyte host's architecture (`linux/amd64` or `linux/arm64`) and push it to a registry
-your Airbyte instance can pull from:
+Prebuilt multi-arch images (`linux/amd64`, `linux/arm64`) are published to GitHub Container Registry for every release:
 
 ```bash
-docker build --platform linux/amd64 -t <registry>/source-sap-hana:0.4.2 .
-docker push <registry>/source-sap-hana:0.4.2
+docker pull ghcr.io/jacopobonomi/source-sap-hana:0.4.2
 ```
 
-Without a registry, `scripts/deploy_to_airbyte.sh root@<airbyte-host>` builds for the right architecture and loads the
-image straight into an `abctl` (kind) or docker-compose Airbyte over SSH.
-
 In Airbyte OSS: *Settings → Sources → + New connector → Add a new Docker connector*
-→ image `<registry>/source-sap-hana`, tag `0.4.2`. Then create a source of type **SAP HANA (Open Source)**.
+→ image `ghcr.io/jacopobonomi/source-sap-hana`, tag `0.4.2`. Then create a source of type **SAP HANA (Open Source)**.
+
+To build it yourself, run `docker build --platform linux/amd64 -t <registry>/source-sap-hana:dev .` (or `linux/arm64`).
+For hosts without registry access, `scripts/deploy_to_airbyte.sh root@<airbyte-host>` builds for the right
+architecture and loads the image straight into an `abctl` (kind) or docker-compose Airbyte over SSH.
 
 Minimal configuration:
 

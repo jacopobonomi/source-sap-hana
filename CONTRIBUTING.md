@@ -35,3 +35,10 @@ The integration tests only read a handful of rows per table.
 
 - Add a unit test for every behaviour change, and a fake-HANA failure scenario for anything touching retries or state.
 - Update `CHANGELOG.md` and bump the version in `pyproject.toml`, `metadata.yaml` and `Dockerfile`.
+
+## Releasing
+
+1. Bump the version in `pyproject.toml`, `metadata.yaml` and `Dockerfile`, and add a `CHANGELOG.md` entry.
+2. Merge to `main`, then tag and push: `git tag v<version> && git push origin v<version>`.
+3. The `Release image` workflow checks that the tag matches `pyproject.toml`, builds `linux/amd64` + `linux/arm64`,
+   pushes `ghcr.io/jacopobonomi/source-sap-hana:<version>` and `:latest`, and smoke-tests `spec` on both architectures.
