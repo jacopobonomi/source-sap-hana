@@ -10,7 +10,7 @@ An open-source (MIT) [Airbyte](https://airbyte.com) source connector for **SAP H
 Airbyte's official SAP HANA connector is Enterprise-only. This one is a community alternative for Airbyte Open Source,
 tested against a production S/4HANA system (tables such as `ACDOCA` with 1.6 billion rows) and running in Airbyte OSS 1.x (`abctl`, amd64 and arm64).
 
-User documentation in Airbyte's format: [docs/sap-hana-oss.md](docs/sap-hana-oss.md).
+**→ [How to use it in Airbyte](#using-it-in-airbyte)** · User documentation in Airbyte's format: [docs/sap-hana-oss.md](docs/sap-hana-oss.md).
 
 ## Features
 
@@ -29,22 +29,60 @@ User documentation in Airbyte's format: [docs/sap-hana-oss.md](docs/sap-hana-oss
 | **Progress & validation** | Row estimates from `SYS.M_TABLES` let the Airbyte UI show progress. `check` runs every row filter against HANA, so a typo fails at setup instead of mid-sync. |
 | **Isolated failures** | A failing stream is reported as `INCOMPLETE` while the other streams keep syncing. The sync then fails with a clear error. |
 
-## Quick start
+## Using it in Airbyte
 
-Prebuilt multi-arch images (`linux/amd64`, `linux/arm64`) are published to GitHub Container Registry for every release:
+The connector isn't in Airbyte's built-in catalog yet ([PR #86928](https://github.com/airbytehq/airbyte/pull/86928)),
+so you add it as a **custom Docker connector**. Prebuilt images for `linux/amd64` and `linux/arm64` are published to
+GitHub Container Registry for every release. They're public, so no registry login is needed.
 
-```bash
-docker pull ghcr.io/jacopobonomi/source-sap-hana:0.4.2
-```
+| Where | Supported |
+|---|---|
+| Airbyte OSS / Self-Managed (`abctl`, Helm, Docker Compose) | ✅ as a custom connector (steps below) |
+| PyAirbyte | ✅ (see below) |
+| Airbyte Cloud | ❌ Cloud doesn't allow custom Docker connectors |
 
-In Airbyte OSS: *Settings → Sources → + New connector → Add a new Docker connector*
-→ image `ghcr.io/jacopobonomi/source-sap-hana`, tag `0.4.2`. Then create a source of type **SAP HANA (Open Source)**.
+### Before you start
 
-To build it yourself, run `docker build --platform linux/amd64 -t <registry>/source-sap-hana:dev .` (or `linux/arm64`).
-For hosts without registry access, `scripts/deploy_to_airbyte.sh root@<airbyte-host>` builds for the right
-architecture and loads the image straight into an `abctl` (kind) or docker-compose Airbyte over SSH.
+- **Network:** the Airbyte server must reach HANA's SQL port (`3<instance>15`, `3<instance>41+` for tenant DBs, `443` for HANA Cloud),
+  directly, over a VPN, or through the built-in SSH tunnel.
+- **A read-only HANA user:**
 
-Minimal configuration:
+  ```sql
+  CREATE USER AIRBYTE_READER PASSWORD "..." NO FORCE_FIRST_PASSWORD_CHANGE;
+  GRANT SELECT ON SCHEMA SAPHANADB TO AIRBYTE_READER;       -- or per table: GRANT SELECT ON SAPHANADB.ACDOCA TO ...
+  ```
+
+  `SYS.TABLES`, `SYS.TABLE_COLUMNS`, `SYS.CONSTRAINTS`, `SYS.SCHEMAS` and `SYS.M_TABLES` are public views.
+  They only show objects the user can access.
+- **License:** reading the HANA database directly with third-party tools requires a HANA **enterprise (full-use)** license.
+  The *runtime* license bundled with many S/4HANA contracts usually doesn't allow it. You can check yours in SAP for Me → Portfolio & Products.
+
+### Step 1: Add the connector
+
+In Airbyte go to **Settings → Sources → + New connector → Add a new Docker connector** and fill in:
+
+| Field | Value |
+|---|---|
+| Connector display name | `SAP HANA (Open Source)` |
+| Docker repository name | `ghcr.io/jacopobonomi/source-sap-hana` |
+| Docker image tag | `0.4.2` (see [releases](https://github.com/jacopobonomi/source-sap-hana/releases) for the latest) |
+| Connector documentation URL | `https://github.com/jacopobonomi/source-sap-hana` |
+
+Airbyte pulls the image and reads its spec. The connector then shows up in the source list.
+
+### Step 2: Create a source
+
+Go to **Sources → + New source**, pick **SAP HANA (Open Source)** and fill in at least:
+
+- **Host**, **Port**, **Username**, **Password**
+- **Schemas**: e.g. `SAPHANADB` (case-sensitive)
+- **Table Name Patterns**: strongly recommended on S/4HANA, which has 100k+ tables. Use SQL `LIKE` patterns, e.g. `ACDOCA`, `MAR%`, `KNA1`.
+
+Optionally set **Stream Settings** (row filters, default cursor, primary key overrides, see [below](#stream-settings)),
+an **SSH Tunnel Method**, or **Encrypt Connection** (required for HANA Cloud). **Set up source** runs a connection check that also
+validates your row filters against HANA.
+
+Equivalent minimal configuration:
 
 ```json
 {
@@ -57,14 +95,49 @@ Minimal configuration:
 }
 ```
 
-### Required privileges
+### Step 3: Create a connection
 
-```sql
-CREATE USER AIRBYTE_READER PASSWORD "..." NO FORCE_FIRST_PASSWORD_CHANGE;
-GRANT SELECT ON SCHEMA SAPHANADB TO AIRBYTE_READER;       -- or per table
+Create a connection to any destination (BigQuery, Postgres, Snowflake…) as usual. Tips:
+
+- Small and medium tables: **Full Refresh | Overwrite** works well. It's paged on the primary key, so an interrupted sync continues from the last page.
+- Large tables such as `ACDOCA`: use **Incremental | Append + Deduped** with a cursor (e.g. `TIMESTAMP`), plus a row filter
+  (e.g. `GJAHR >= '2025'`) to limit the first sync. Set a primary key override in Stream Settings if the table has none.
+
+### Upgrading
+
+Go to **Settings → Sources**, find **SAP HANA (Open Source)** and change the version to a newer tag from the
+[releases page](https://github.com/jacopobonomi/source-sap-hana/releases). Existing sources and connections keep working.
+
+### Using it with PyAirbyte
+
+```python
+import airbyte as ab
+
+source = ab.get_source(
+    "source-sap-hana",
+    docker_image="ghcr.io/jacopobonomi/source-sap-hana:0.4.2",
+    config={
+        "host": "hana.example.com",
+        "port": 30015,
+        "username": "AIRBYTE_READER",
+        "password": "********",
+        "schemas": ["SAPHANADB"],
+        "table_name_patterns": ["MARA", "MAKT"],
+    },
+)
+source.check()
+source.select_all_streams()
+result = source.read()
 ```
 
-`SYS.TABLES`, `SYS.TABLE_COLUMNS`, `SYS.CONSTRAINTS` and `SYS.SCHEMAS` are public views. They only show objects the user can access.
+### Building the image yourself
+
+```bash
+docker build --platform linux/amd64 -t <registry>/source-sap-hana:dev .   # or linux/arm64
+```
+
+If the Airbyte host can't pull from a registry, `scripts/deploy_to_airbyte.sh root@<airbyte-host>` builds for the host's
+architecture and loads the image straight into an `abctl` (kind) or Docker Compose Airbyte over SSH.
 
 ## Configuration
 
